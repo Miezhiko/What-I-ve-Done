@@ -3,8 +3,7 @@
 grab info of what you've done on your previous workday
 ------------------------------------------------------
 
-(Na-na, na, na, na-na, na, na)
-(Na-na, na, na, na-na, na, na)
+ - http-client and aeson-optics, nothing in addition
 
 `conf.yml` file example:
 
@@ -35,3 +34,6 @@ Just issues ->
               = [ ("query", Just $ "work author: " <> myou <> " work date: " <> mytDate)
                 , ("fields", Just "duration(presentation),text,date") ]
 ```
+
+(Na-na, na, na, na-na, na, na)\
+(Na-na, na, na, na-na, na, na)
