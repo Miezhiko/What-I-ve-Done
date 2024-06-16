@@ -1,6 +1,6 @@
 cabal-version:      3.4
 name:               yt
-version:            0.1.0.0
+version:            0.1.0.1
 
 license:            AGPL-3.0-only
 author:             Miezhiko

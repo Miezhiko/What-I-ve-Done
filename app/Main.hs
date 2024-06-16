@@ -69,7 +69,8 @@ main = do
   myesterday  <- getYesterday <$> getCurrentDay
   manager     <- newTlsManager
 
-  let myou           = toBS $ you mcfg
+  let myous          = you mcfg
+      myou           = toBS myous
       mapiToken      = apiToken mcfg
       myoutrackUrl   = youtrackUrl mcfg
       mworkItemsUrl  = workItemsUrl mcfg
@@ -108,16 +109,17 @@ main = do
               Nothing -> putStrLn "Error parsing response"
               Just workItems ->
                 let processWorkItem ∷ Value -> IO ()
-                    processWorkItem workItem = do
+                    processWorkItem workItem =
                       let Just comment    = workItem ^? key "text" % _String
                           Just wdate      = workItem ^? key "date" % _Integer
-                          -- wdateObject     = posixSecondsToUTCTime (fromIntegral wdate / 1000)
-                          -- wdateReadable   = formatTime defaultTimeLocale "%Y-%m-%d" wdateObject
+                          wdateObject     = posixSecondsToUTCTime (fromIntegral wdate / 1000)
+                          wdateReadable   = formatTime defaultTimeLocale "%Y-%m-%d" wdateObject
 
-                      if wdate >= mytTimestampW
-                        then putStrLn $ T.unpack issueId ++ " ("
-                                     ++ T.unpack summary ++ ") "
-                                     ++ T.unpack comment
-                        else pure ()
+                      in if wdate >= mytTimestampW
+                            then putStrLn $ wdateReadable ++ ": "
+                                          ++ T.unpack issueId ++ " ("
+                                          ++ T.unpack summary ++ ") "
+                                          ++ T.unpack comment
+                            else pure ()
                 in forM_ workItems processWorkItem
       in forM_ issues processIssue
