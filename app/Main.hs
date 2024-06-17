@@ -94,8 +94,7 @@ main = do
           processIssue issue = do
             let Just summary = issue ^? key "summary" % _String
                 Just issueId = issue ^? key "idReadable" % _String
-
-            let workItemsParams :: [(ByteString, Maybe ByteString)]
+                workItemsParams :: [(ByteString, Maybe ByteString)]
                   = [ ("query", Just $ "work author: " <> myou <> " work date: " <> mytDate)
                     , ("fields", Just "duration(presentation),text,date") ]
             request <- parseRequest mworkItemsUrl
