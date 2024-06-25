@@ -3,7 +3,8 @@
 grab info of what you've done on your previous workday
 ------------------------------------------------------
 
- - http-client and aeson-optics, nothing in addition
+ - http-client
+ - aeson-optics
 
 `conf.yml` file example:
 
@@ -20,7 +21,7 @@ let Just summary = issue ^? key "summary" % _String
     workItemsParams :: [(ByteString, Maybe ByteString)]
       = [ ("query", Just $ "work author: " <> myou <> " work date: " <> mytDate)
         , ("fields", Just "duration(presentation),text,date") ]
-request <- parseRequest mworkItemsUrl
+request <- parseRequest $ workItemsUrl mcfg
 response <- httpLbs request
   { method = "GET"
   , queryString = W.renderQuery True workItemsParams
@@ -29,13 +30,7 @@ response <- httpLbs request
 
 case decode (responseBody response) :: Maybe [Value] of
   Nothing -> putStrLn "Error parsing response"
-  Just workItems ->
-    let processWorkItem ∷ Value -> IO ()
-        processWorkItem workItem =
-          let Just comment    = workItem ^? key "text" % _String
-              Just wdate      = workItem ^? key "date" % _Integer
-              wdateObject     = posixSecondsToUTCTime (fromIntegral wdate / 1000)
-              wdateReadable   = formatTime defaultTimeLocale "%Y-%m-%d" wdateObject
+  Just wi -> processWorkItems wi myesterday issueId summary
 ```
 
 (Na-na, na, na, na-na, na, na)\
