@@ -11,6 +11,8 @@ import           Data.Aeson.Optics
 import           Data.ByteString         (ByteString)
 import qualified Data.CaseInsensitive    as CI (mk)
 import           Data.Foldable           (for_)
+import           Data.List               (nub)
+import           Data.Maybe              (catMaybes)
 import qualified Data.Text               as T
 import qualified Data.Text.Encoding      as TE
 import           Data.Time
@@ -52,7 +54,7 @@ main = do
   case decode (responseBody iresponse) :: Maybe [Value] of
     Nothing     -> putStrLn "Error parsing response"
     Just issues ->
-      let processIssue ∷ Value -> IO ()
+      let processIssue ∷ Value -> IO (Maybe [(String, String)])
           processIssue issue = do
             let Just summary = issue ^? key "summary" % _String
                 Just issueId = issue ^? key "idReadable" % _String
@@ -67,9 +69,17 @@ main = do
               } manager
 
             case decode (responseBody response) :: Maybe [Value] of
-              Nothing -> putStrLn "Error parsing response"
-              Just wi -> processWorkItems wi myesterday issueId summary
-      in for_ issues processIssue
+              Nothing -> pure Nothing
+              Just [] -> pure Nothing
+              Just wi -> pure $ Just (processWorkItems wi myesterday issueId summary)
+      in do processedIssues <- traverse processIssue issues
+            let pureIusses  = concat $ catMaybes processedIssues
+                outIssues   = nub $ map fst pureIusses
+                outSummary  = nub $ map snd pureIusses
+            putStrLn "Issues:"
+            for_ outIssues $ putStrLn
+            putStrLn "\nWhat I've done:"
+            for_ outSummary $ putStrLn
 
  where params ∷ ByteString -> ByteString -> [(ByteString, Maybe ByteString)]
        params y ytDateBS =
@@ -85,10 +95,11 @@ main = do
           | dayOfWeek day == Monday = addDays (-3) day
           | otherwise = addDays (-1) day
 
-processWorkItems ∷ Foldable t =>
-                 t Value -> Day -> T.Text -> T.Text -> IO ()
-processWorkItems workItems ystd issueId summary = for_ workItems processWorkItem
- where processWorkItem ∷ Value -> IO ()
+processWorkItems ∷ [Value] -> Day -> T.Text -> T.Text -> [(String, String)]
+processWorkItems [] _ _ _ = []
+processWorkItems workItems ystd issueId summary =
+  catMaybes $ map processWorkItem workItems
+ where processWorkItem ∷ Value -> Maybe (String, String)
        processWorkItem workItem =
         let Just comment    = workItem ^? key "text" % _String
             Just wdate      = workItem ^? key "date" % _Integer
@@ -96,11 +107,11 @@ processWorkItems workItems ystd issueId summary = for_ workItems processWorkItem
             wdateReadable   = formatTime defaultTimeLocale "%Y-%m-%d" wdateObject
 
         in if wdate >= ytTimestampWithWorkdayHours ystd
-              then putStrLn $ wdateReadable ++ ": "
-                            ++ T.unpack issueId ++ " ("
-                            ++ T.unpack summary ++ ") "
-                            ++ T.unpack comment
-              else pure ()
+              then Just ( wdateReadable ++ ": "
+                       ++ T.unpack issueId ++ " ("
+                       ++ T.unpack summary ++ ")",
+                          T.unpack comment )
+              else Nothing
 
        ytTimestampWithWorkdayHours ∷ Day -> Integer
        ytTimestampWithWorkdayHours yesterday = ytTimestamp yesterday - 28800000
