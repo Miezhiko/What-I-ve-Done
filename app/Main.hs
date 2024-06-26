@@ -77,9 +77,9 @@ main = do
                 outIssues   = nub $ map fst pureIusses
                 outSummary  = nub $ map snd pureIusses
             putStrLn "Issues:"
-            for_ outIssues $ putStrLn
+            for_ outIssues $ \i -> putStrLn $ "• " ++ i
             putStrLn "\nWhat I've done:"
-            for_ outSummary $ putStrLn
+            for_ outSummary $ \s -> putStrLn $ "• " ++ s
 
  where params ∷ ByteString -> ByteString -> [(ByteString, Maybe ByteString)]
        params y ytDateBS =
