@@ -103,14 +103,14 @@ processWorkItems workItems ystd issueId summary =
        processWorkItem workItem =
         let Just comment    = workItem ^? key "text" % _String
             Just wdate      = workItem ^? key "date" % _Integer
+        {-
             wdateObject     = posixSecondsToUTCTime (fromIntegral wdate / 1000)
             wdateReadable   = formatTime defaultTimeLocale "%Y-%m-%d" wdateObject
+        -}
 
-        in if wdate >= ytTimestampWithWorkdayHours ystd
-              then Just ( wdateReadable ++ ": "
-                       ++ T.unpack issueId ++ " ("
-                       ++ T.unpack summary ++ ")",
-                          T.unpack comment )
+        in if wdate > ytTimestampWithWorkdayHours ystd
+              then Just ( -- wdateReadable ++ ": "
+                          T.unpack issueId ++ ": " ++ T.unpack summary, T.unpack comment )
               else Nothing
 
        ytTimestampWithWorkdayHours ∷ Day -> Integer
